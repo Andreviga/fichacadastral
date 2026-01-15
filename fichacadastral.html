@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ficha Cadastral — Colégio</title>
+  <style>
+    :root{
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --accent:#111827;
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue", sans-serif;
+      color:var(--text);
+      background:var(--bg);
+    }
+    .page{
+      max-width: 980px;
+      margin: 24px auto;
+      padding: 0 16px 28px;
+    }
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:16px;
+    }
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .brand h1{
+      margin:0;
+      font-size:20px;
+      letter-spacing:.2px;
+    }
+    .brand p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    button{
+      border:1px solid var(--line);
+      background:var(--card);
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+      font-size:13px;
+    }
+    button.primary{
+      background:var(--accent);
+      border-color:var(--accent);
+      color:white;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    }
+
+    fieldset{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:14px;
+      margin:0 0 14px 0;
+    }
+    legend{
+      padding:0 8px;
+      font-weight:800;
+      font-size:13px;
+      letter-spacing:.2px;
+    }
+
+    .grid{
+      display:grid;
+      gap:12px;
+    }
+    .grid.two{ grid-template-columns: 1fr 1fr; }
+    .grid.three{ grid-template-columns: 1fr 1fr 1fr; }
+    .grid.four{ grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+    }
+    label{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    input, select, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:10px 11px;
+      font-size:14px;
+      outline:none;
+      background:#fff;
+    }
+    textarea{ min-height: 90px; resize:vertical; }
+    input:focus, select:focus, textarea:focus{
+      border-color:#9ca3af;
+      box-shadow: 0 0 0 3px rgba(17,24,39,.08);
+    }
+
+    .inline{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .check{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      border:1px dashed var(--line);
+      padding:10px 12px;
+      border-radius:10px;
+      background:#fafafa;
+    }
+    .check input{ width:auto; margin:0; }
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+
+    .divider{
+      height:1px;
+      background:var(--line);
+      margin:12px 0;
+    }
+
+    .footer{
+      margin-top:12px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    .toast{
+      margin: 0 0 12px 0;
+      padding: 10px 12px;
+      border:1px solid var(--line);
+      border-radius: 12px;
+      background: #f9fafb;
+      color: var(--text);
+      font-size: 13px;
+      display:none;
+    }
+
+    @media (max-width: 760px){
+      .grid.two, .grid.three, .grid.four { grid-template-columns: 1fr; }
+      header{ flex-direction:column; align-items:stretch; }
+      .actions{ justify-content:flex-start; }
+    }
+
+    /* Impressão / PDF */
+    @media print{
+      body{ background:white; }
+      .page{ margin:0; max-width:none; padding:0; }
+      .actions{ display:none; }
+      .card{ border:none; box-shadow:none; padding:0; }
+      fieldset{ break-inside:avoid; }
+      .toast{ display:none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="brand">
+        <h1>Ficha Cadastral</h1>
+        <p>Preencha digitalmente. Para enviar em PDF: clique em “Imprimir / Salvar PDF” e escolha “Salvar como PDF”.</p>
+      </div>
+      <div class="actions">
+        <button type="button" id="btnSave">Salvar rascunho</button>
+        <button type="button" id="btnLoad">Carregar rascunho</button>
+        <button type="button" id="btnClear">Limpar</button>
+        <button type="button" id="btnSubmit" class="primary">Enviar</button>
+        <button type="button" class="primary" id="btnPrint">Imprimir / Salvar PDF</button>
+      </div>
+    </header>
+
+    <div class="toast" id="toast"></div>
+
+    <main class="card">
+      <form id="formFicha" autocomplete="on">
+
+        <!-- DADOS DO ALUNO -->
+        <fieldset>
+          <legend>DADOS DO ALUNO(A)</legend>
+          <div class="grid two">
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="aluno_nome">Nome completo</label>
+              <input id="aluno_nome" name="aluno_nome" required />
+            </div>
+
+            <div class="field">
+              <label for="aluno_matricula">Matrícula</label>
+              <input id="aluno_matricula" name="aluno_matricula" />
+            </div>
+
+            <div class="field">
+              <label for="aluno_ra">RA</label>
+              <input id="aluno_ra" name="aluno_ra" />
+            </div>
+
+            <div class="field">
+              <label for="aluno_nasc">Data de nascimento</label>
+              <input id="aluno_nasc" name="aluno_nasc" placeholder="DD/MM/AAAA" inputmode="numeric" />
+            </div>
+
+            <div class="field">
+              <label for="aluno_cpf">CPF</label>
+              <input id="aluno_cpf" name="aluno_cpf" placeholder="000.000.000-00" inputmode="numeric" />
+            </div>
+
+            <div class="field">
+              <label for="aluno_rg">RG</label>
+              <input id="aluno_rg" name="aluno_rg" />
+            </div>
+
+            <div class="field">
+              <label for="aluno_rg_emissao">Emissão (RG)</label>
+              <input id="aluno_rg_emissao" name="aluno_rg_emissao" placeholder="DD/MM/AAAA" inputmode="numeric" />
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="aluno_email">E-mail</label>
+              <input id="aluno_email" name="aluno_email" type="email" />
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="aluno_endereco">Endereço residencial (rua, nº, compl., bairro, cidade/UF)</label>
+              <textarea id="aluno_endereco" name="aluno_endereco"></textarea>
+            </div>
+
+            <div class="field">
+              <label for="aluno_cep">CEP</label>
+              <input id="aluno_cep" name="aluno_cep" placeholder="00000-000" inputmode="numeric" />
+            </div>
+
+            <div class="field">
+              <label for="aluno_telefones">Telefones (fixo/recados)</label>
+              <input id="aluno_telefones" name="aluno_telefones" placeholder="(11) 0000-0000" inputmode="numeric" />
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="aluno_obs">Observações</label>
+              <textarea id="aluno_obs" name="aluno_obs" placeholder="Informações relevantes (ex.: guarda, autorização, etc.)"></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- CONTRATANTES -->
+        <fieldset>
+          <legend>CONTRATANTES</legend>
+          <p class="hint">Preencha o Contratante 2 apenas se houver. Se o endereço for o mesmo do aluno(a), marque a opção.</p>
+
+          <div class="grid two">
+            <!-- Contratante 1 -->
+            <fieldset>
+              <legend>Contratante 1</legend>
+              <div class="grid two">
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>Nome completo</label>
+                  <input name="c1_nome" />
+                </div>
+
+                <div class="field">
+                  <label>Parentesco</label>
+                  <input name="c1_parentesco" />
+                </div>
+
+                <div class="field">
+                  <label>Estado civil</label>
+                  <input name="c1_estado_civil" />
+                </div>
+
+                <div class="field">
+                  <label>Sexo</label>
+                  <select name="c1_sexo">
+                    <option value=""></option>
+                    <option>Feminino</option>
+                    <option>Masculino</option>
+                    <option>Outro</option>
+                    <option>Prefiro não informar</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>CPF</label>
+                  <input name="c1_cpf" placeholder="000.000.000-00" inputmode="numeric" />
+                </div>
+
+                <div class="field">
+                  <label>RG</label>
+                  <input name="c1_rg" />
+                </div>
+
+                <div class="field">
+                  <label>Nascimento</label>
+                  <input name="c1_nasc" placeholder="DD/MM/AAAA" inputmode="numeric" />
+                </div>
+
+                <div class="field">
+                  <label>Celular / operadora</label>
+                  <input name="c1_cel_oper" placeholder="(11) 90000-0000" inputmode="numeric" />
+                </div>
+
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>E-mail</label>
+                  <input name="c1_email" type="email" />
+                </div>
+
+                <div class="check" style="grid-column: 1 / -1;">
+                  <input type="checkbox" id="c1_mesmo_endereco" name="c1_mesmo_endereco" />
+                  <label for="c1_mesmo_endereco" style="margin:0;color:var(--text);font-weight:700;">Endereço residencial é o mesmo do aluno(a)</label>
+                </div>
+
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>Endereço residencial</label>
+                  <textarea name="c1_endereco"></textarea>
+                </div>
+
+                <div class="field">
+                  <label>CEP</label>
+                  <input name="c1_cep" placeholder="00000-000" inputmode="numeric" />
+                </div>
+
+                <div class="field">
+                  <label>Telefones (recados)</label>
+                  <input name="c1_telefones" placeholder="(11) 0000-0000" inputmode="numeric" />
+                </div>
+
+                <div class="field">
+                  <label>Profissão</label>
+                  <input name="c1_profissao" />
+                </div>
+
+                <div class="field">
+                  <label>Empresa</label>
+                  <input name="c1_empresa" />
+                </div>
+
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>Endereço comercial</label>
+                  <textarea name="c1_end_comercial"></textarea>
+                </div>
+
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>Telefone comercial</label>
+                  <input name="c1_tel_comercial" placeholder="(11) 0000-0000" inputmode="numeric" />
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- Contratante 2 -->
+            <fieldset>
+              <legend>Contratante 2</legend>
+              <div class="grid two">
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>Nome completo</label>
+                  <input name="c2_nome" />
+                </div>
+
+                <div class="field">
+                  <label>Parentesco</label>
+                  <input name="c2_parentesco" />
+                </div>
+
+                <div class="field">
+                  <label>Estado civil</label>
+                  <input name="c2_estado_civil" />
+                </div>
+
+                <div class="field">
+                  <label>Sexo</label>
+                  <select name="c2_sexo">
+                    <option value=""></option>
+                    <option>Feminino</option>
+                    <option>Masculino</option>
+                    <option>Outro</option>
+                    <option>Prefiro não informar</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>CPF</label>
+                  <input name="c2_cpf" placeholder="000.000.000-00" inputmode="numeric" />
+                </div>
+
+                <div class="field">
+                  <label>RG</label>
+                  <input name="c2_rg" />
+                </div>
+
+                <div class="field">
+                  <label>Nascimento</label>
+                  <input name="c2_nasc" placeholder="DD/MM/AAAA" inputmode="numeric" />
+                </div>
+
+                <div class="field">
+                  <label>Celular / operadora</label>
+                  <input name="c2_cel_oper" placeholder="(11) 90000-0000" inputmode="numeric" />
+                </div>
+
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>E-mail</label>
+                  <input name="c2_email" type="email" />
+                </div>
+
+                <div class="check" style="grid-column: 1 / -1;">
+                  <input type="checkbox" id="c2_mesmo_endereco" name="c2_mesmo_endereco" />
+                  <label for="c2_mesmo_endereco" style="margin:0;color:var(--text);font-weight:700;">Endereço residencial é o mesmo do aluno(a)</label>
+                </div>
+
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>Endereço residencial</label>
+                  <textarea name="c2_endereco"></textarea>
+                </div>
+
+                <div class="field">
+                  <label>CEP</label>
+                  <input name="c2_cep" placeholder="00000-000" inputmode="numeric" />
+                </div>
+
+                <div class="field">
+                  <label>Telefones (recados)</label>
+                  <input name="c2_telefones" placeholder="(11) 0000-0000" inputmode="numeric" />
+                </div>
+
+                <div class="field">
+                  <label>Profissão</label>
+                  <input name="c2_profissao" />
+                </div>
+
+                <div class="field">
+                  <label>Empresa</label>
+                  <input name="c2_empresa" />
+                </div>
+
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>Endereço comercial</label>
+                  <textarea name="c2_end_comercial"></textarea>
+                </div>
+
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>Telefone comercial</label>
+                  <input name="c2_tel_comercial" placeholder="(11) 0000-0000" inputmode="numeric" />
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        </fieldset>
+
+        <!-- RESPONSÁVEL FINANCEIRO -->
+        <fieldset>
+          <legend>RESPONSÁVEL FINANCEIRO</legend>
+
+          <p class="hint">
+            Selecione quem receberá boletos e notas fiscais (e-mail/contato financeiro).
+          </p>
+
+          <div class="inline">
+            <label class="check">
+              <input type="radio" name="responsavel_financeiro" value="c1" required>
+              Contratante 1
+            </label>
+
+            <label class="check">
+              <input type="radio" name="responsavel_financeiro" value="c2">
+              Contratante 2
+            </label>
+          </div>
+
+          <div class="grid two" style="margin-top:12px;">
+            <div class="field">
+              <label>E-mail financeiro (boletos / NF)</label>
+              <input name="financeiro_email" type="email" placeholder="Se vazio, usaremos o e-mail do contratante selecionado">
+            </div>
+
+            <div class="field">
+              <label>Telefone financeiro (opcional)</label>
+              <input name="financeiro_tel" placeholder="(11) 90000-0000" inputmode="numeric">
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- FICHA MÉDICA -->
+        <fieldset>
+          <legend>FICHA MÉDICA</legend>
+
+          <div class="grid two">
+            <div class="field">
+              <label>Tipo sanguíneo</label>
+              <select name="med_tipo_sangue">
+                <option value=""></option>
+                <option>A</option><option>B</option><option>AB</option><option>O</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Fator RH</label>
+              <select name="med_rh">
+                <option value=""></option>
+                <option>+</option><option>-</option>
+              </select>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Atividades físicas que não pode praticar</label>
+              <textarea name="med_ativ_restritas"></textarea>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Doenças que teve (histórico)</label>
+              <textarea name="med_doencas_teve"></textarea>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Doenças que tem atualmente</label>
+              <textarea name="med_doencas_atual"></textarea>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid two">
+            <div class="field">
+              <label>Plano de saúde (nome)</label>
+              <input name="med_plano" />
+            </div>
+
+            <div class="field">
+              <label>Nome do titular</label>
+              <input name="med_titular" />
+            </div>
+
+            <div class="field">
+              <label>Nº de inscrição</label>
+              <input name="med_inscricao" />
+            </div>
+
+            <div class="field">
+              <label>Telefones do plano</label>
+              <input name="med_tel_plano" placeholder="(11) 0000-0000" inputmode="numeric" />
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid two">
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Alergias (medicamentos, alimentos, insetos etc.)</label>
+              <textarea name="med_alergias"></textarea>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Manifesta-se da seguinte forma</label>
+              <textarea name="med_alergias_manifest"></textarea>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Remédios / restrições importantes</label>
+              <textarea name="med_remedios"></textarea>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid two">
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Tratamento médico</label>
+              <div class="inline">
+                <label class="check"><input type="radio" name="med_trat_med" value="Sim"> Sim</label>
+                <label class="check"><input type="radio" name="med_trat_med" value="Não"> Não</label>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Nome do médico</label>
+              <input name="med_nome_medico" />
+            </div>
+
+            <div class="field">
+              <label>Telefone do médico</label>
+              <input name="med_tel_medico" placeholder="(11) 0000-0000" inputmode="numeric" />
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Motivo e descrição (trat. médico)</label>
+              <textarea name="med_trat_med_desc"></textarea>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Tratamento psicológico</label>
+              <div class="inline">
+                <label class="check"><input type="radio" name="med_trat_psico" value="Sim"> Sim</label>
+                <label class="check"><input type="radio" name="med_trat_psico" value="Não"> Não</label>
+              </div>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Motivo e descrição (trat. psicológico)</label>
+              <textarea name="med_trat_psico_desc"></textarea>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid two">
+            <div class="field">
+              <label>Cirurgia 1 (descrição)</label>
+              <input name="med_cir1_desc" />
+            </div>
+            <div class="field">
+              <label>Cirurgia 1 (data)</label>
+              <input name="med_cir1_data" placeholder="DD/MM/AAAA" inputmode="numeric" />
+            </div>
+            <div class="field">
+              <label>Cirurgia 2 (descrição)</label>
+              <input name="med_cir2_desc" />
+            </div>
+            <div class="field">
+              <label>Cirurgia 2 (data)</label>
+              <input name="med_cir2_data" placeholder="DD/MM/AAAA" inputmode="numeric" />
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid two">
+            <div class="field">
+              <label>Em caso de emergência, procurar</label>
+              <input name="med_emerg_contato" />
+            </div>
+            <div class="field">
+              <label>Telefone(s)</label>
+              <input name="med_emerg_tel" placeholder="(11) 90000-0000" inputmode="numeric" />
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Hospital/clínica de preferência (ou mais próximo)</label>
+              <textarea name="med_hospital"></textarea>
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Possui necessidades especiais? Quais?</label>
+              <textarea name="med_needs"></textarea>
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Necessita de recursos/apoios específicos? Quais?</label>
+              <textarea name="med_recursos"></textarea>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid two">
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Autorizações</label>
+              <div class="inline">
+                <label class="check"><input type="checkbox" name="aut_remedios"> Autorizo administração de remédios (com orientação por escrito)</label>
+              </div>
+              <p class="hint">Observação: anexe cópia da carteirinha do plano de saúde quando houver.</p>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- DECLARAÇÃO / ASSINATURA -->
+        <fieldset>
+          <legend>DECLARAÇÃO E ASSINATURA</legend>
+          <p class="hint">Declaro que as informações acima são verdadeiras e que qualquer mudança será informada previamente à instituição.</p>
+
+          <div class="grid two">
+            <div class="field">
+              <label>Data</label>
+              <input name="assin_data" placeholder="DD/MM/AAAA" inputmode="numeric" />
+            </div>
+            <div class="field">
+              <label>Nome do responsável</label>
+              <input name="assin_nome" />
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="footer">
+          <strong>LGPD:</strong> os dados serão utilizados exclusivamente para fins administrativos, acadêmicos e de segurança do(a) aluno(a), conforme políticas da instituição.
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    const form = document.getElementById('formFicha');
+    const toastEl = document.getElementById('toast');
+
+    function toast(msg, type="info"){
+      toastEl.textContent = msg;
+      toastEl.style.display = "block";
+      toastEl.style.borderColor = type === "error" ? "#fecaca" : "#e5e7eb";
+      toastEl.style.background = type === "error" ? "#fef2f2" : "#f9fafb";
+      window.clearTimeout(toastEl._t);
+      toastEl._t = window.setTimeout(()=> toastEl.style.display="none", 3500);
+    }
+
+    // ====== RESPONSÁVEL FINANCEIRO (AUTO-PREENCHIMENTO) ======
+    function getValue(name){
+      const el = form.querySelector(`[name="${name}"]`);
+      return el ? el.value : "";
+    }
+    function setValue(name, value){
+      const el = form.querySelector(`[name="${name}"]`);
+      if (el && !el.value) el.value = value || "";
+    }
+
+    function syncFinanceFromResponsible(){
+      const r = form.querySelector('input[name="responsavel_financeiro"]:checked')?.value;
+      const finEmail = form.querySelector('input[name="financeiro_email"]');
+      if (!r || !finEmail) return;
+
+      const sourceEmail = (r === "c1") ? getValue("c1_email") : getValue("c2_email");
+      const sourcePhone = (r === "c1") ? getValue("c1_cel_oper") : getValue("c2_cel_oper");
+
+      // só preenche se estiver vazio (pra permitir override manual)
+      setValue("financeiro_email", sourceEmail);
+      setValue("financeiro_tel", sourcePhone);
+    }
+
+    form.addEventListener("change", (e)=>{
+      if (e.target.name === "responsavel_financeiro") syncFinanceFromResponsible();
+      if (["c1_email","c2_email","c1_cel_oper","c2_cel_oper"].includes(e.target.name)) {
+        syncFinanceFromResponsible();
+      }
+    });
+
+        // ---------- Máscaras simples ----------
+    function onlyDigits(v){ return (v || '').replace(/\D/g,''); }
+
+    function maskCPF(v){
+      v = onlyDigits(v).slice(0,11);
+      v = v.replace(/(\d{3})(\d)/,'$1.$2')
+           .replace(/(\d{3})(\d)/,'$1.$2')
+           .replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+      return v;
+    }
+    function maskCEP(v){
+      v = onlyDigits(v).slice(0,8);
+      v = v.replace(/(\d{5})(\d)/,'$1-$2');
+      return v;
+    }
+    function maskPhone(v){
+      v = onlyDigits(v).slice(0,11);
+      if (v.length <= 10){
+        return v.replace(/(\d{2})(\d)/,'($1) $2')
+                .replace(/(\d{4})(\d)/,'$1-$2');
+      }
+      return v.replace(/(\d{2})(\d)/,'($1) $2')
+              .replace(/(\d{5})(\d)/,'$1-$2');
+    }
+    function maskDate(v){
+      v = onlyDigits(v).slice(0,8);
+      v = v.replace(/(\d{2})(\d)/,'$1/$2')
+           .replace(/(\d{2})(\d)/,'$1/$2');
+      return v;
+    }
+
+    function attachMask(selector, masker){
+      document.querySelectorAll(selector).forEach(el=>{
+        el.addEventListener('input', ()=> el.value = masker(el.value));
+      });
+    }
+
+    attachMask('input[name="aluno_cpf"], input[name="c1_cpf"], input[name="c2_cpf"]', maskCPF);
+    attachMask('input[name="aluno_cep"], input[name="c1_cep"], input[name="c2_cep"]', maskCEP);
+
+    // INCLUI financeirio_tel aqui (correção)
+    attachMask('input[name="financeiro_tel"], input[name="aluno_telefones"], input[name="c1_telefones"], input[name="c2_telefones"], input[name="c1_tel_comercial"], input[name="c2_tel_comercial"], input[name="med_tel_plano"], input[name="med_tel_medico"], input[name="med_emerg_tel"], input[name="c1_cel_oper"], input[name="c2_cel_oper"], input[name="med_emerg_tel"]', maskPhone);
+
+    attachMask('#aluno_nasc, #aluno_rg_emissao, input[name="c1_nasc"], input[name="c2_nasc"], input[name="med_cir1_data"], input[name="med_cir2_data"], input[name="assin_data"]', maskDate);
+
+    // ---------- Endereço igual ao do aluno ----------
+    function syncAddress(checkboxId, textareaName){
+      const cb = document.getElementById(checkboxId);
+      const alunoEndereco = document.getElementById('aluno_endereco');
+      const alvo = document.querySelector(`textarea[name="${textareaName}"]`);
+      if (!cb || !alunoEndereco || !alvo) return;
+
+      function apply(){
+        if (cb.checked){
+          alvo.value = alunoEndereco.value;
+          alvo.setAttribute('disabled','disabled');
+        } else {
+          alvo.removeAttribute('disabled');
+        }
+      }
+      cb.addEventListener('change', apply);
+      alunoEndereco.addEventListener('input', ()=> { if (cb.checked) apply(); });
+      apply();
+    }
+    syncAddress('c1_mesmo_endereco','c1_endereco');
+    syncAddress('c2_mesmo_endereco','c2_endereco');
+
+    // ---------- Rascunho local ----------
+    const KEY = 'ficha_cadastral_rascunho_v1';
+
+    function serializeForm(){
+      const data = {};
+      new FormData(form).forEach((value, key) => {
+        data[key] = value;
+      });
+      // checkboxes (FormData não inclui unchecked)
+      form.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+        data[cb.name] = cb.checked;
+      });
+      return data;
+    }
+
+    function fillForm(data){
+      if (!data) return;
+      Object.entries(data).forEach(([k,v])=>{
+        const els = form.querySelectorAll(`[name="${k}"]`);
+        if (!els.length) return;
+
+        els.forEach(el=>{
+          if (el.type === 'checkbox'){
+            el.checked = !!v;
+          } else if (el.type === 'radio'){
+            el.checked = (el.value === v);
+          } else {
+            el.value = v ?? '';
+          }
+        });
+      });
+      // re-aplicar sincronização de endereço e financeiro
+      document.getElementById('c1_mesmo_endereco')?.dispatchEvent(new Event('change'));
+      document.getElementById('c2_mesmo_endereco')?.dispatchEvent(new Event('change'));
+      syncFinanceFromResponsible();
+    }
+
+    // ---------- Payload (pronto para API) ----------
+    function buildPayload(){
+      const d = serializeForm();
+
+      const responsavel = d.responsavel_financeiro; // "c1" ou "c2"
+      const c1Email = d.c1_email || "";
+      const c2Email = d.c2_email || "";
+      const c1Tel = d.c1_cel_oper || "";
+      const c2Tel = d.c2_cel_oper || "";
+
+      const financeiroEmail = d.financeiro_email || (responsavel === "c1" ? c1Email : c2Email);
+      const financeiroTel = d.financeiro_tel || (responsavel === "c1" ? c1Tel : c2Tel);
+
+      return {
+        version: "1.0",
+        source: "web",
+        createdAtClient: new Date().toISOString(),
+
+        aluno: {
+          nome: d.aluno_nome,
+          matricula: d.aluno_matricula,
+          ra: d.aluno_ra,
+          nasc: d.aluno_nasc,
+          cpf: d.aluno_cpf,
+          rg: d.aluno_rg,
+          rg_emissao: d.aluno_rg_emissao,
+          email: d.aluno_email,
+          endereco: d.aluno_endereco,
+          cep: d.aluno_cep,
+          telefones: d.aluno_telefones,
+          obs: d.aluno_obs,
+        },
+
+        contratantes: {
+          c1: {
+            nome: d.c1_nome, parentesco: d.c1_parentesco, estado_civil: d.c1_estado_civil, sexo: d.c1_sexo,
+            cpf: d.c1_cpf, rg: d.c1_rg, nasc: d.c1_nasc,
+            cel_oper: d.c1_cel_oper, email: d.c1_email,
+            mesmo_endereco: !!d.c1_mesmo_endereco,
+            endereco: d.c1_endereco, cep: d.c1_cep, telefones: d.c1_telefones,
+            profissao: d.c1_profissao, empresa: d.c1_empresa,
+            end_comercial: d.c1_end_comercial, tel_comercial: d.c1_tel_comercial
+          },
+          c2: {
+            nome: d.c2_nome, parentesco: d.c2_parentesco, estado_civil: d.c2_estado_civil, sexo: d.c2_sexo,
+            cpf: d.c2_cpf, rg: d.c2_rg, nasc: d.c2_nasc,
+            cel_oper: d.c2_cel_oper, email: d.c2_email,
+            mesmo_endereco: !!d.c2_mesmo_endereco,
+            endereco: d.c2_endereco, cep: d.c2_cep, telefones: d.c2_telefones,
+            profissao: d.c2_profissao, empresa: d.c2_empresa,
+            end_comercial: d.c2_end_comercial, tel_comercial: d.c2_tel_comercial
+          }
+        },
+
+        responsavel_financeiro: responsavel,
+        financeiro: {
+          email: financeiroEmail,
+          tel: financeiroTel,
+          recebe_boletos: true,
+          recebe_notas_fiscais: true,
+        },
+
+        medico: {
+          tipo_sangue: d.med_tipo_sangue,
+          rh: d.med_rh,
+          ativ_restritas: d.med_ativ_restritas,
+          doencas_teve: d.med_doencas_teve,
+          doencas_atual: d.med_doencas_atual,
+
+          plano: d.med_plano,
+          titular: d.med_titular,
+          inscricao: d.med_inscricao,
+          tel_plano: d.med_tel_plano,
+
+          alergias: d.med_alergias,
+          alergias_manifest: d.med_alergias_manifest,
+          remedios: d.med_remedios,
+
+          trat_med: d.med_trat_med,
+          nome_medico: d.med_nome_medico,
+          tel_medico: d.med_tel_medico,
+          trat_med_desc: d.med_trat_med_desc,
+
+          trat_psico: d.med_trat_psico,
+          trat_psico_desc: d.med_trat_psico_desc,
+
+          cir1_desc: d.med_cir1_desc,
+          cir1_data: d.med_cir1_data,
+          cir2_desc: d.med_cir2_desc,
+          cir2_data: d.med_cir2_data,
+
+          emerg_contato: d.med_emerg_contato,
+          emerg_tel: d.med_emerg_tel,
+          hospital: d.med_hospital,
+
+          needs: d.med_needs,
+          recursos: d.med_recursos,
+
+          aut_remedios: !!d.aut_remedios
+        },
+
+        assinatura: {
+          data: d.assin_data,
+          nome: d.assin_nome
+        }
+      };
+    }
+
+    // ---------- Botões ----------
+    document.getElementById('btnSave').addEventListener('click', ()=>{
+      localStorage.setItem(KEY, JSON.stringify(serializeForm()));
+      toast('Rascunho salvo neste computador.');
+    });
+
+    document.getElementById('btnLoad').addEventListener('click', ()=>{
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return toast('Nenhum rascunho encontrado.', 'error');
+      fillForm(JSON.parse(raw));
+      toast('Rascunho carregado.');
+    });
+
+    document.getElementById('btnClear').addEventListener('click', ()=>{
+      if (confirm('Limpar todos os campos?')) {
+        form.reset();
+        document.getElementById('c1_mesmo_endereco')?.dispatchEvent(new Event('change'));
+        document.getElementById('c2_mesmo_endereco')?.dispatchEvent(new Event('change'));
+        syncFinanceFromResponsible();
+        toast('Campos limpos.');
+      }
+    });
+
+    document.getElementById('btnPrint').addEventListener('click', ()=>{
+      window.print();
+    });
+
+    // Envio: manda o payload para o Wix (iframe parent) via postMessage
+    document.getElementById('btnSubmit').addEventListener('click', async ()=>{
+      if (!form.reportValidity()) return;
+      const payload = buildPayload();
+
+      window.parent.postMessage({
+        type: "FICHA_CADASTRAL_SUBMIT",
+        payload
+      }, "*");
+
+      toast('Enviado para o site (processando)...');
+    });
+
+    // Resposta do Wix: sucesso / erro
+    window.addEventListener('message', (event) => {
+      const data = event.data;
+      if (!data) return;
+
+      if (data.type === 'FICHA_CADASTRAL_OK') {
+        toast('Salvo com sucesso no sistema.');
+      }
+      if (data.type === 'FICHA_CADASTRAL_ERRO') {
+        toast('Erro ao salvar: ' + (data.error || 'desconhecido'), 'error');
+      }
+    });
+  </script>
+</body>
+</html>
